@@ -13,6 +13,7 @@ struct StopwatchSessionView: View {
     @State private var isRunning = false
     
     var body: some View {
+        
         VStack {
             ForEach(stopwatches) { stopwatch in
                 StopwatchView(stopwatch: stopwatch)
@@ -35,6 +36,9 @@ struct StopwatchSessionView: View {
             }
             .padding()
         }
+        .background(Color.black)
+        .preferredColorScheme(.dark)
+
     }
     
     private func startAll() {

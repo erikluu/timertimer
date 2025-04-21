@@ -11,6 +11,8 @@ class Stopwatch: ObservableObject, Identifiable {
     private var lastLapTime: Date?
     private var timer: Timer?
     
+    // MARK: Public Functions
+    
     func start() {
         if timer == nil {
             startTime = Date()
@@ -43,7 +45,7 @@ class Stopwatch: ObservableObject, Identifiable {
         lapElapsed = 0
     }
     
-    // ========================================================================
+    // MARK: Private Functions
     
     private func updateElapsedTime() {
         if let start = startTime, let lastLap = lastLapTime {

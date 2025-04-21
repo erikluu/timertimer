@@ -9,90 +9,94 @@ import SwiftUI
 struct StopwatchView: View {
     @ObservedObject var stopwatch: Stopwatch
     
-    private var fastestLap: TimeInterval? {
-        stopwatch.lapTimes.min()
-    }
-    
-    private var slowestLap: TimeInterval? {
-        stopwatch.lapTimes.max()
-    }
+    var CIRCLE_WIDTH: CGFloat = 50
+    var MAX_LAP_HEIGHT: CGFloat = 5 // Fixed height for lap times to prevent resizing
     
     var body: some View {
-        HStack(alignment: .center) {
-            // Current Lap Time
-            Text(formatTime(stopwatch.lapElapsed))
-                .font(.system(size: 20, weight: .bold, design: .monospaced))
-                .frame(width: 100, alignment: .leading)
-            
-            // Lap Times ScrollView
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(Array(stopwatch.lapTimes.reversed().enumerated()), id: \.offset) { index, lap in
-                        Text(formatTime(lap))
-                            .font(.system(size: 14, design: .monospaced))
-                            .padding(6)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(colorForLap(lap))
-                            )
-                            .foregroundColor(.white)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 8) {
+                // Large current lap time
+                Text(formatTime(stopwatch.lapElapsed))
+                    .font(.system(size: 36, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white)
+
+                // Fixed height for lap times display (prevents resizing)
+                VStack(spacing: 5) {
+                    ScrollView(.horizontal, showsIndicators: true) {
+                        HStack(spacing: 10) {
+                            let lapCount = stopwatch.lapTimes.count
+                            ForEach(Array(stopwatch.lapTimes.reversed().enumerated()), id: \.offset) { i, lap in
+                                Text("Lap \(lapCount - i): \(formatTime(lap))")
+                                    .font(.footnote)
+                                    .foregroundColor(colorForLap(at: i))
+                                    .frame(height: 20) // Consistent height for each lap time
+                            }
+                        }
                     }
                 }
+                .frame(height: MAX_LAP_HEIGHT) // Set a fixed height for lap times area
             }
-            .frame(height: 44)
-
-            // Buttons on the right
-            VStack(spacing: 8) {
+            .padding(.leading)
+            
+            Spacer()
+            
+            // Control Buttons
+            HStack(spacing: 12) {
                 Button(action: {
                     stopwatch.isRunning ? stopwatch.stop() : stopwatch.start()
                 }) {
                     Text(stopwatch.isRunning ? "Stop" : "Start")
-                        .font(.caption)
-                        .frame(width: 60)
-                        .padding(6)
-                        .background(stopwatch.isRunning ? Color.red : Color.green)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .foregroundColor(stopwatch.isRunning ? .red : .green)
+                        .frame(width: CIRCLE_WIDTH, height: CIRCLE_WIDTH)
+                        .background(Circle().fill(Color.white.opacity(0.1)))
+                        .overlay(Circle().stroke(stopwatch.isRunning ? Color.red : Color.green, lineWidth: 1))
                 }
                 
                 Button(action: {
                     stopwatch.isRunning ? stopwatch.lap() : stopwatch.reset()
                 }) {
                     Text(stopwatch.isRunning ? "Lap" : "Reset")
-                        .font(.caption)
-                        .frame(width: 60)
-                        .padding(6)
-                        .background(Color.blue)
                         .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .frame(width: CIRCLE_WIDTH, height: CIRCLE_WIDTH)
+                        .background(Circle().fill(Color.white.opacity(0.1)))
+                        .overlay(Circle().stroke(Color.white, lineWidth: 1))
                 }
             }
+            .padding(.trailing)
         }
-        .padding(.horizontal)
+        .padding(.vertical, 10)
+        .background(Color.black)
+        .frame(maxWidth: .infinity) // Ensure the view takes up full space
     }
-
-    // MARK: - Helper Functions
     
-    private func formatTime(_ interval: TimeInterval) -> String {
+    // MARK: - Helpers
+    
+    func formatTime(_ interval: TimeInterval) -> String {
         let minutes = Int(interval) / 60
         let seconds = Int(interval) % 60
         let hundredths = Int((interval - floor(interval)) * 100)
         return String(format: "%02d:%02d.%02d", minutes, seconds, hundredths)
     }
 
-    private func colorForLap(_ lap: TimeInterval) -> Color {
-        if stopwatch.lapTimes.count <= 1 { return .gray }
-        if lap == fastestLap { return .green }
-        if lap == slowestLap { return .red }
-        return .blue
+    func colorForLap(at index: Int) -> Color {
+        if stopwatch.lapTimes.count < 2 { return .white }
+        
+        guard let max = stopwatch.lapTimes.max(),
+              let min = stopwatch.lapTimes.min() else { return .white }
+
+        let lap = stopwatch.lapTimes[index]
+        if lap == max {
+            return .red
+        } else if lap == min {
+            return .green
+        } else {
+            return .white
+        }
     }
 }
-
-
 
 struct StopwatchView_Previews: PreviewProvider {
     static var previews: some View {
         StopwatchView(stopwatch: Stopwatch())
     }
 }
-
