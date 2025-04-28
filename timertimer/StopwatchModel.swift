@@ -10,20 +10,28 @@ class Stopwatch: ObservableObject, Identifiable {
     private var startTime: Date?
     private var lastLapTime: Date?
     private var timer: Timer?
+    private var previousTime: TimeInterval = 0
     
     // MARK: Public Functions
     
     func start() {
-        if timer == nil {
-            startTime = Date()
-            lastLapTime = startTime
-        }
-        timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
-            DispatchQueue.main.async {
-                self.updateElapsedTime()
+        if !isRunning {
+            if timer == nil {
+                startTime = Date()
+                lastLapTime = startTime
             }
+            timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
+                DispatchQueue.main.async {
+                    self.updateElapsedTime()
+                }
+            }
+            isRunning = true
         }
-        isRunning = true
+    }
+    
+    func stop() {
+        timer?.invalidate()
+        isRunning = false
     }
     
     func reset() {
@@ -32,10 +40,6 @@ class Stopwatch: ObservableObject, Identifiable {
         totalElapsed = 0
         lapElapsed = 0
         lapTimes.removeAll()
-    }
-        
-    func stop() {
-        timer?.invalidate()
         isRunning = false
     }
     
@@ -49,8 +53,15 @@ class Stopwatch: ObservableObject, Identifiable {
     
     private func updateElapsedTime() {
         if let start = startTime, let lastLap = lastLapTime {
-            totalElapsed = Date().timeIntervalSince(start)
+            totalElapsed = Date().timeIntervalSince(start) + previousTime
             lapElapsed = Date().timeIntervalSince(lastLap)
+        }
+    }
+    
+    func pause() {
+        if isRunning {
+            previousTime += totalElapsed
+            stop()
         }
     }
 }
